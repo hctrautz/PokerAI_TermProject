@@ -4,7 +4,5 @@ initial_stack: 100
 max_round: 10
 small_blind: 10
 ai_players:
-- name: fish_player1
-  path: fish_player_setup.py
-- name: fish_player
-  path: fish_player_setup.py
+- name: MonteCarlo1
+  path: MonteCarlo_player_setup.py
