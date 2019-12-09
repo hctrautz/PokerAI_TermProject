@@ -22,12 +22,11 @@ class MonteCarloPlayer(BasePokerPlayer):
         super().__init__()
         self.wins = 0
         self.losses = 0
-        self.n_simulations = 1000
 
     # valid_actions[0] = fold, valid_actions[1] = call, and valid_actions[2] = raise
     #  we define the logic to make an action through this method. (so this method would be the core of your AI)
     def declare_action(self, valid_actions, hole_card, round_state):
-        #determines the current rounde state so that we may better our AI's action accordingly
+        #determines the current round state so that we may better our AI's action accordingly
         try:
             opponent_action_dict = round_state['action_histories'][round_state['street']][-1]
         except:
@@ -50,14 +49,42 @@ class MonteCarloPlayer(BasePokerPlayer):
         opponent_action = opponent_action_dict['action']
 
         can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0
-
-        if win_rate >= 1.0 / self.nb_player:
-            action = valid_actions[1]  # fetch CALL action info
+        if can_call:
+            # If so, compute the amount that needs to be called
+            call_amount = [item for item in valid_actions if item['action'] == 'call'][0]['amount']
         else:
-            action = valid_actions[0]  # fetch FOLD action info
+            call_amount = 0
 
+        amount = None
 
-        return action['action'], action['amount']
+        if win_rate > 0.5:
+            raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
+            if win_rate > 0.85:
+                # If it is extremely likely to win, then raise as much as possible
+                action = 'raise'
+                amount = raise_amount_options['max']
+            elif win_rate > 0.75:
+                # If it is likely to win, then raise by the minimum amount possible
+                action = 'raise'
+                amount = raise_amount_options['min']
+            else:
+                # If there is a chance to win, then call
+                action = 'call'
+        else:
+            action = 'call' if can_call and call_amount == 0 else 'fold'
+
+            # Set the amount
+        if amount is None:
+            items = [item for item in valid_actions if item['action'] == action]
+            amount = items[0]['amount']
+
+        return action, amount
+
+        # if win_rate >= 1.0 / self.nb_player:
+        #     action = valid_actions[1]  # fetch CALL action info
+        # else:
+        #     action = valid_actions[0]  # fetch FOLD action info
+        # return action['action'], action['amount']
 
     def receive_game_start_message(self, game_info):
         self.nb_player = game_info['player_num']
