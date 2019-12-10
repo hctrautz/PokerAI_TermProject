@@ -18,7 +18,7 @@
 3. Ensure that the project interpreter is set to Python 3.7 in File -> Settings -> Project: PokerAI_TermProject-master -> Project Interpreter
 4. Also in Project Interpreter Settings, install the PyPokerEngine and PyPokerGUI packages by clicking the "+" button. 
 5. PyPokerGUI has an exisiting bug that does not allow it to run with Python 3.7, so we have to now edit one file so that our pojrect can work.
-6. Navigate to venv(library root)/Lib/site-packages/pypokergui/server/templates/round_state.html
+6. Navigate to venv/python3.7/lib/site-packages/pypokergui/server/templates/round_state.html
 7. Under the "seats-upper-row row-center" div replace "{% for idx, player in zip(range(len(round_state['seats']))[:len(round_state['seats'])/2], round_state['seats']) %}" with "{% for idx, player in zip(range(len(round_state['seats']))[:int(len(round_state['seats'])/2)], round_state['seats']) %}"
 8. Lastly, under the "seats-lower row row-center" div replace "{% for idx, player in zip(range(len(round_state['seats']))[len(round_state['seats'])/2:], round_state['seats'][len(round_state['seats'])/2:]) %}" with "{% for idx, player in zip(range(len(round_state['seats']))[int(len(round_state['seats'])/2):], round_state['seats'][int(len(round_state['seats'])/2):]) %}"
 
