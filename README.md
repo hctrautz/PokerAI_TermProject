@@ -22,7 +22,7 @@
 
 ![Interpreter](https://i.imgur.com/at7r1nM.png)
 
-<h2> Steps to run </h2>
+<h2> Steps to Run </h2>
 
 1. After completing all of the installation steps, open the Terminal inside of PyCharm located in the bottom left corner.
 2. Type: "pypokergui serve poker_conf.yaml --port 8000 --speed moderate" and then press enter.
