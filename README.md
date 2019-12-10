@@ -34,6 +34,8 @@
 
 ![Example](https://i.imgur.com/2US3QVK.png)
 
+![Example2](https://i.imgur.com/YAxhGVg.png)
+
 <h2> Resources Used in Development </h2> 
 
 * [PyPokerEngine](https://github.com/ishikota/PyPokerEngine)
