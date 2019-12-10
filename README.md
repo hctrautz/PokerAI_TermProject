@@ -4,6 +4,8 @@
 
 *Hunter Trautz and Gabriel Aponte*
 
+[Github](https://github.com/hctrautz/PokerAI_TermProject)
+
 <h2> Prerequisites </h2> 
 
 * [PyCharm](https://www.jetbrains.com/pycharm/)
