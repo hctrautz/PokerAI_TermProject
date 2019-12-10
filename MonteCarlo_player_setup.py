@@ -63,7 +63,7 @@ class MonteCarloPlayer(BasePokerPlayer):
         raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
         opponent_action = opponent_action_dict['action']
         max = raise_amount_options['max']
-        min = max = raise_amount_options['min']
+        min = raise_amount_options['min']
 
         #Determine whether or not calling is a valid action during the current round state
         can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0
@@ -100,7 +100,8 @@ class MonteCarloPlayer(BasePokerPlayer):
                 amount = int(((200-stack)/200)*(max-min)+min)
             elif win_rate > .75:
                 action = 'raise'
-                amount = int((.85((200-stack)/200))*(max-min)+min)
+                print("GOT HERE")
+                amount = int(.85*((20-stack)/(200))*(max- min) + min)
             elif win_rate > .45:
                 action = 'call'
             else:
@@ -108,7 +109,7 @@ class MonteCarloPlayer(BasePokerPlayer):
                 if self.bluffing:
                     if num > .5:
                         action = 'raise'
-                        amount = int((stack / 100)/8*(max-min))
+                        amount = int((stack/100)/8*(max-min))
                         amount += min
                     else:
                         action = "call"
