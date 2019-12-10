@@ -1,3 +1,4 @@
+import random
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rate, _fill_community_card, \
@@ -22,6 +23,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         super().__init__()
         self.wins = 0
         self.losses = 0
+        self.bluffing = True
+        self.turnCount = 0
+        self.prevRound = 0
 
     # valid_actions[0] = fold, valid_actions[1] = call, and valid_actions[2] = raise
     #  we define the logic to make an action through this method. (so this method would be the core of your AI)
@@ -35,6 +39,7 @@ class MonteCarloPlayer(BasePokerPlayer):
             else:
                 opponent_action_dict = round_state['action_histories']['preflop'][-1]
 
+        #Need to take into account the community cards when calculating our winrate
         community_card = round_state['community_card']
         win_rate = estimate_hole_card_win_rate(
             nb_simulation=NB_SIMULATION,
@@ -43,11 +48,24 @@ class MonteCarloPlayer(BasePokerPlayer):
             community_card=gen_cards(community_card)
         )
 
+        #Reset our initial variables before the start of each round
+        if 'round_count' not in round_state.keys() and self.turn == 0:
+            self.bluffing = False
+
+        if 'round_count' in round_state.keys():
+            if round_state['round_count'] != self.prevRound:
+                self.prevRound = round_state['round_count']
+                self.bluffing = False
+                self.turnCount = 0
+
         pot_amount = round_state['pot']['main']['amount']
-        ai_stack = [player['stack'] for player in round_state['seats'] if player['uuid'] == self.uuid][0]
+        stack = [player['stack'] for player in round_state['seats'] if player['uuid'] == self.uuid][0]
         raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
         opponent_action = opponent_action_dict['action']
+        max = raise_amount_options['max']
+        min = max = raise_amount_options['min']
 
+        #Determine whether or not calling is a valid action during the current round state
         can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0
         if can_call:
             # If so, compute the amount that needs to be called
@@ -57,34 +75,77 @@ class MonteCarloPlayer(BasePokerPlayer):
 
         amount = None
 
-        if win_rate > 0.5:
-            raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
-            if win_rate > 0.85:
-                # If it is extremely likely to win, then raise as much as possible
+        if opponent_action == "raise":
+            if win_rate > .85:
                 action = 'raise'
-                amount = raise_amount_options['max']
-            elif win_rate > 0.75:
-                # If it is likely to win, then raise by the minimum amount possible
+                amount = max
+            elif win_rate > .75:
                 action = 'raise'
-                amount = raise_amount_options['min']
-            else:
-                # If there is a chance to win, then call
+                amount = int(((200-stack)/200)*(max-min)+min)
+            elif win_rate > .55:
                 action = 'call'
+            else:
+                if self.bluffing:
+                    action = 'call'
+                else:
+                    num = random.uniform(0, 1)
+                    if num > win_rate / 2:
+                        action = 'fold'
+                    elif can_call:
+                        action = 'call'
         else:
-            action = 'call' if can_call and call_amount == 0 else 'fold'
+            # raise less if opponent calls
+            if win_rate > .85:
+                action = 'raise'
+                amount = int(((200-stack)/200)*(max-min)+min)
+            elif win_rate > .75:
+                action = 'raise'
+                amount = int((.85((200-stack)/200))*(max-min)+min)
+            elif win_rate > .45:
+                action = 'call'
+            else:
+                num = random.uniform(0, 1)
+                if self.bluffing:
+                    if num > .5:
+                        action = 'raise'
+                        amount = int((stack / 100)/8*(max-min))
+                        amount += min
+                    else:
+                        action = "call"
+                else:
+                    if num > win_rate:
+                        action = 'fold'
+                    elif num > win_rate / 2 and can_call:
+                        action = 'call'
+                    else:
+                        action = 'raise'
+                        # small bluff
+                        amount = int((stack/100)/8*(max-min))
+                        amount += min
+                        self.bluffing = True
 
-            # Set the amount
         if amount is None:
             items = [item for item in valid_actions if item['action'] == action]
             amount = items[0]['amount']
 
-        return action, amount
+        if amount < 0 or self.turnCount == 0:
+            action = 'call'
+            items = [item for item in valid_actions if item['action'] == action]
+            amount = items[0]['amount']
 
-        # if win_rate >= 1.0 / self.nb_player:
-        #     action = valid_actions[1]  # fetch CALL action info
-        # else:
-        #     action = valid_actions[0]  # fetch FOLD action info
-        # return action['action'], action['amount']
+            if win_rate < .25:
+                action = 'fold'
+
+            if opponent_action == 'raise' and win_rate < .4:
+                action = 'fold'
+
+        if action == "raise" and amount > max:
+            amount = max
+        if action == "raise" and amount < min:
+            amount = min
+
+        self.turnCount += 1
+        return action, amount
 
     def receive_game_start_message(self, game_info):
         self.nb_player = game_info['player_num']
@@ -99,6 +160,9 @@ class MonteCarloPlayer(BasePokerPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
+        result = self.uuid in [item['uuid'] for item in winners]
+        self.wins += int(result)
+        self.losses += int(not result)
         pass
 
 def setup_ai():
