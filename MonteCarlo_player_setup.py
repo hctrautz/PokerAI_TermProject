@@ -79,10 +79,10 @@ class MonteCarloPlayer(BasePokerPlayer):
         amount = None
 
         if opponent_action == "raise":
-            if win_rate > .85:
+            if win_rate > .75:
                 action = 'raise'
                 amount = max
-            elif win_rate > .75:
+            elif win_rate > .65:
                 action = 'raise'
                 amount = int(((200-stack)/200)*(max-min)+min)
             elif win_rate > .55:
@@ -98,13 +98,13 @@ class MonteCarloPlayer(BasePokerPlayer):
                         action = 'call'
         else:
             # raise less if opponent calls
-            if win_rate > .85:
+            if win_rate > .75:
                 action = 'raise'
                 amount = int(((200-stack)/200)*(max-min)+min)
-            elif win_rate > .75:
+            elif win_rate > .65:
                 action = 'raise'
                 amount = int(.85*((20-stack)/(200))*(max- min) + min)
-            elif win_rate > .45:
+            elif win_rate > .55:
                 action = 'call'
             else:
                 num = random.uniform(0, 1)
