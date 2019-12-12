@@ -4,5 +4,5 @@ initial_stack: 100
 max_round: 10
 small_blind: 10
 ai_players:
-- name: MonteCarlo1
+- name: MonteCarlo
   path: MonteCarlo_player_setup.py
