@@ -48,6 +48,9 @@ class MonteCarloPlayer(BasePokerPlayer):
             community_card=gen_cards(community_card)
         )
 
+        #Print out the cards in the agent's hand for debugging purposes
+        print(hole_card)
+
         #Reset our initial variables before the start of each round
         if 'round_count' not in round_state.keys() and self.turn == 0:
             self.bluffing = False
@@ -100,7 +103,6 @@ class MonteCarloPlayer(BasePokerPlayer):
                 amount = int(((200-stack)/200)*(max-min)+min)
             elif win_rate > .75:
                 action = 'raise'
-                print("GOT HERE")
                 amount = int(.85*((20-stack)/(200))*(max- min) + min)
             elif win_rate > .45:
                 action = 'call'
@@ -114,13 +116,15 @@ class MonteCarloPlayer(BasePokerPlayer):
                     else:
                         action = "call"
                 else:
-                    if num > win_rate:
+                    if can_call and call_amount == 0:
+                        action = "call"
+                        print("Match Call 0")
+                    elif num > win_rate:
                         action = 'fold'
-                    elif num > win_rate / 2 and can_call:
+                    elif num > win_rate/2 and can_call:
                         action = 'call'
                     else:
                         action = 'raise'
-                        # small bluff
                         amount = int((stack/100)/8*(max-min))
                         amount += min
                         self.bluffing = True
